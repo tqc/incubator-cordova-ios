@@ -583,9 +583,13 @@
     CGAffineTransform startupImageTransform = CGAffineTransformIdentity;
     UIDeviceOrientation deviceOrientation = [UIDevice currentDevice].orientation;
     CGRect screenBounds = [[UIScreen mainScreen] bounds];
+    CGRect statusBarFrame = [UIApplication sharedApplication].statusBarFrame;
     UIInterfaceOrientation statusBarOrientation = [UIApplication sharedApplication].statusBarOrientation;
     BOOL isIPad = [[self class] isIPad];
     UIImage* launchImage = nil;
+    
+    // default to center of screen as in the original implementation. This will produce the 20px jump
+    CGPoint center = CGPointMake((screenBounds.size.width / 2), (screenBounds.size.height / 2));
     
     if (isIPad)
     {
@@ -599,18 +603,21 @@
             {
                 orientedLaunchImageFile = [NSString stringWithFormat:@"%@-Landscape", launchImageFile];
                 startupImageTransform = CGAffineTransformMakeRotation(degreesToRadian(90));
+                center.x -= MIN(statusBarFrame.size.width, statusBarFrame.size.height)/2;
             }
                 break;
             case UIDeviceOrientationLandscapeRight: // this is where the home button is on the left (yeah, I know, confusing)
             {
                 orientedLaunchImageFile = [NSString stringWithFormat:@"%@-Landscape", launchImageFile];
                 startupImageTransform = CGAffineTransformMakeRotation(degreesToRadian(-90));
-            } 
+                center.x += MIN(statusBarFrame.size.width, statusBarFrame.size.height)/2;
+           } 
                 break;
             case UIDeviceOrientationPortraitUpsideDown:
             {
                 orientedLaunchImageFile = [NSString stringWithFormat:@"%@-Portrait", launchImageFile];
                 startupImageTransform = CGAffineTransformMakeRotation(degreesToRadian(180));
+                center.y -= MIN(statusBarFrame.size.width, statusBarFrame.size.height)/2;
             } 
                 break;
             case UIDeviceOrientationPortrait:
@@ -618,6 +625,7 @@
             {
                 orientedLaunchImageFile = [NSString stringWithFormat:@"%@-Portrait", launchImageFile];
                 startupImageTransform = CGAffineTransformIdentity;
+                center.y += MIN(statusBarFrame.size.width, statusBarFrame.size.height)/2;
             }
                 break;
         }
@@ -636,7 +644,7 @@
     
     self.imageView = [[[UIImageView alloc] initWithImage:launchImage] autorelease];    
     self.imageView.tag = 1;
-    self.imageView.center = CGPointMake((screenBounds.size.width / 2), (screenBounds.size.height / 2));
+    self.imageView.center = center;
     
     self.imageView.autoresizingMask = (UIViewAutoresizingFlexibleWidth & UIViewAutoresizingFlexibleHeight & UIViewAutoresizingFlexibleLeftMargin & UIViewAutoresizingFlexibleRightMargin);    
     [self.imageView setTransform:startupImageTransform];
